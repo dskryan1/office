@@ -79,7 +79,7 @@ def reordenar_ids_inventario():
                 novo_id, r["coletado_em"], r["hostname"], r["usuario"], r["sistema"],
                 r["versao"], r["processador"], r["memoria_gb"], r["memoria_tipo"] if "memoria_tipo" in r.keys() else None,
                 r["disco_tipo"] if "disco_tipo" in r.keys() else None, r["disco_tamanho_gb"] if "disco_tamanho_gb" in r.keys() else None, r["disco_livre_gb"],
-                r["ipv4"], r["origem"], r.get("pa"), r.get("anydesk"), r.get("matricula")
+                r["ipv4"], r["origem"], r["pa"] if "pa" in r.keys() else None, r["anydesk"] if "anydesk" in r.keys() else None, r["matricula"] if "matricula" in r.keys() else None
             ))
             novo_id += 1
         con.commit()
@@ -403,7 +403,7 @@ elif page == "Inventário":
 
         st.markdown("### 🛠️ Gerenciar Registro (Editar / Excluir)")
         
-        item_options = {f"ID {r['id']} | Host: {r['hostname']} | Matrícula: {r['matricula'] if 'matricula' in r.keys() and r['matricula'] else 'N/A'} | P.A.: {r['pa'] if 'pa' in r.keys() and r['pa'] else 'N/A'}": r['id'] for r in records}s}
+        item_options = {f"ID {r['id']} | Host: {r['hostname']} | Matrícula: {r['matricula'] if 'matricula' in r.keys() and r['matricula'] else 'N/A'} | P.A.: {r['pa'] if 'pa' in r.keys() and r['pa'] else 'N/A'}": r['id'] for r in records}
         selected_label = st.selectbox("Selecione um registro:", list(item_options.keys()))
         selected_id = item_options[selected_label]
 
