@@ -198,7 +198,7 @@ Write-Host '=========================================='
 Write-Host '   OFFICE TELCO - COLETA DE INVENTARIO'
 Write-Host '=========================================='
 Write-Host ''
-$paInput = Read-Host 'Digite a sua P.A. (opcional, Pressione Enter para ignorar)'
+$paInput = Read-Host 'Digite a sua P.A. (opcional, Pressione Enter para ignorar,Exemplo: PA-P01)'
 $anydeskInput = Read-Host 'Digite o seu AnyDesk (opcional, Pressione Enter para ignorar)'
 $matInput = Read-Host 'Digite a sua Matricula (opcional, Pressione Enter para ignorar)'
 
