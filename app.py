@@ -453,7 +453,7 @@ elif page == "Inventário":
                     with c_disk1:
                         e_disco_tipo = st.text_input("Tipo de Disco", value=item_to_edit.get("disco_tipo") or "")
                     with c_disk2:
-                        e_disco_tamanho = st.number_input("Tamanho Total do Disco (GB)", value=float(item_to_edit.get("disco_tamanho_gb"] or 0.0), step=0.1)
+                        e_disco_tamanho = st.number_input("Tamanho Total do Disco (GB)", value=float(item_to_edit.get("disco_tamanho_gb") or 0.0), step=0.1)
                     with c_disk3:
                         e_disco_livre = st.number_input("Disco Livre (GB)", value=float(item_to_edit["disco_livre_gb"] or 0.0), step=0.1)
 
