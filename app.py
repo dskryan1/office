@@ -21,7 +21,7 @@ DATA_DIR = APP_DIR / "dados"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "office_telco_ti.db"
 
-st.set_page_config(page_title="Office Telco | Painel de TI", page_icon="🖥", layout="wide")
+st.set_page_config(page_title="Office Telco | Painel de TI", page_icon="🛠️", layout="wide")
 
 def db():
     con = sqlite3.connect(DB_PATH)
@@ -147,6 +147,43 @@ def iniciar_receptor():
     threading.Thread(target=servidor.serve_forever, daemon=True).start()
     return True
 
+def run_readonly_ad_query():
+    script = r'''
+$ErrorActionPreference = 'Stop'
+if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
+  Write-Output 'MODULO_AD_NAO_INSTALADO'
+  exit 2
+}
+try {
+  $domain = Get-ADDomain
+  $users = (Get-ADUser -Filter * -ResultSetSize 5000 | Measure-Object).Count
+  $computers = (Get-ADComputer -Filter * -ResultSetSize 5000 | Measure-Object).Count
+  [PSCustomObject]@{
+    Domain = $domain.DNSRoot
+    UsersCount = $users
+    ComputersCount = $computers
+    Status = 'Consulta somente leitura'
+  } | ConvertTo-Json -Compress
+} catch {
+  Write-Output ('ERRO_AD: ' + $_.Exception.Message)
+  exit 1
+}
+'''
+    try:
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", "-Command", script],
+            capture_output=True, text=True, timeout=30, check=False
+        )
+        output = (result.stdout or "").strip()
+        err = (result.stderr or "").strip()
+        if result.returncode == 0 and output:
+            return json.loads(output), None
+        if "MODULO_AD_NAO_INSTALADO" in output:
+            return None, "Módulo ActiveDirectory não encontrado."
+        return None, (output or err or "A consulta não retornou dados.")
+    except Exception as exc:
+        return None, f"Não foi possível executar a consulta: {exc}"
+
 init_db()
 receptor_ativo = iniciar_receptor()
 
@@ -198,7 +235,7 @@ Write-Host '=========================================='
 Write-Host '   OFFICE TELCO - COLETA DE INVENTARIO'
 Write-Host '=========================================='
 Write-Host ''
-$paInput = Read-Host 'Digite a sua P.A. (opcional, Pressione Enter para ignorar,Exemplo: PA-P01)'
+$paInput = Read-Host 'Digite a sua P.A. (opcional, Pressione Enter para ignorar)'
 $anydeskInput = Read-Host 'Digite o seu AnyDesk (opcional, Pressione Enter para ignorar)'
 $matInput = Read-Host 'Digite a sua Matricula (opcional, Pressione Enter para ignorar)'
 
@@ -300,14 +337,28 @@ if page == "Modo Colaborador":
         arq = st.file_uploader("Arquivo inventario_*.json", type=["json"])
         if arq is not None and st.button("Enviar arquivo para a TI"):
             try:
-                dados = json.loads(arq.getvalue().decode("utf-8-sig"))
-                if not isinstance(dados, dict) or not dados.get("hostname"):
-                    raise ValueError("arquivo invalido")
+                raw_bytes = arq.getvalue()
+                try:
+                    conteudo = raw_bytes.decode("utf-8-sig")
+                except UnicodeDecodeError:
+                    conteudo = raw_bytes.decode("latin-1")
+                    
+                dados = json.loads(conteudo)
+                if not isinstance(dados, dict):
+                    raise ValueError("conteudo nao e um objeto JSON valido")
+                
+                if "hostname" not in dados or not dados["hostname"]:
+                    dados["hostname"] = "Desconhecido"
+                
+                dados.setdefault("pa", "")
+                dados.setdefault("anydesk", "")
+                dados.setdefault("matricula", "")
                 dados["origem"] = "Coleta remota (arquivo)"
+                
                 salvar_inventario(dados)
                 st.success("Inventário enviado com sucesso para a TI. Obrigado!")
-            except Exception:
-                st.error("Arquivo inválido. Use o ficheiro gerado pelo Enviar_Inventario.bat.")
+            except Exception as exc:
+                st.error(f"Erro ao processar o arquivo: {exc}. Verifique se o arquivo esta correto.")
 
 elif page == "Visão geral":
     st.markdown('''
@@ -331,9 +382,6 @@ elif page == "Visão geral":
     if st.button("Executar e salvar diagnóstico local", type="primary"):
         info = local_diagnostics()
         info["origem"] = "Servidor do painel"
-        info["pa"] = st.text_input("P.A. (Opcional)", value="")
-        info["anydesk"] = st.text_input("AnyDesk (Opcional)", value="")
-        info["matricula"] = st.text_input("Matrícula (Opcional)", value="")
         salvar_inventario(info)
         st.success("Informações atualizadas e salvas no inventário.")
 
@@ -405,7 +453,7 @@ elif page == "Inventário":
                     with c_disk1:
                         e_disco_tipo = st.text_input("Tipo de Disco", value=item_to_edit.get("disco_tipo") or "")
                     with c_disk2:
-                        e_disco_tamanho = st.number_input("Tamanho Total do Disco (GB)", value=float(item_to_edit.get("disco_tamanho_gb") or 0.0), step=0.1)
+                        e_disco_tamanho = st.number_input("Tamanho Total do Disco (GB)", value=float(item_to_edit.get("disco_tamanho_gb"] or 0.0), step=0.1)
                     with c_disk3:
                         e_disco_livre = st.number_input("Disco Livre (GB)", value=float(item_to_edit["disco_livre_gb"] or 0.0), step=0.1)
 
