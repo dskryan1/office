@@ -403,7 +403,7 @@ elif page == "Inventário":
 
         st.markdown("### 🛠️ Gerenciar Registro (Editar / Excluir)")
         
-        item_options = {f"ID {r['id']} | Host: {r['hostname']} | Matrícula: {r.get('matricula') or 'N/A'} | P.A.: {r.get('pa') or 'N/A'}": r['id'] for r in records}
+        item_options = {f"ID {r['id']} | Host: {r['hostname']} | Matrícula: {r['matricula'] if 'matricula' in r.keys() and r['matricula'] else 'N/A'} | P.A.: {r['pa'] if 'pa' in r.keys() and r['pa'] else 'N/A'}": r['id'] for r in records}s}
         selected_label = st.selectbox("Selecione um registro:", list(item_options.keys()))
         selected_id = item_options[selected_label]
 
