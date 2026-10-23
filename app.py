@@ -21,7 +21,7 @@ DATA_DIR = APP_DIR / "dados"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "office_telco_ti.db"
 
-st.set_page_config(page_title="Office Telco | Painel de TI", page_icon="🛠️", layout="wide")
+st.set_page_config(page_title="Office Telco | Painel de TI", page_icon="🖥", layout="wide")
 
 def db():
     con = sqlite3.connect(DB_PATH)
